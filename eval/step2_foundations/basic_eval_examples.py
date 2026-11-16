@@ -54,21 +54,36 @@ def llm_judge_section(verbose: bool = False) -> list[bool]:
     if verbose:
         log_io(question, answer)
 
-    # TODO-01: rendre le prompt du juge plus précis pour qu'il évalue les instructions importantes du prompt système de l'agent
     tone_score = GEval(
         name="ProfessionalTone",
         model=model,
-        criteria="La réponse doit garder un ton professionnel...",
+        criteria=(
+            "Évalue si la réponse adopte un ton professionnel, courtois et respectueux, "
+            "adapté à un contexte de support informatique. "
+            "La réponse doit être claire, bienveillante et rassurante, "
+            "sans familiarité excessive, agressivité, jugement ou formulation méprisante. "
+            "Elle doit s'adresser à l'utilisateur de manière polie et utiliser "
+            "un langage accessible, sans jargon technique inutile. "
+            "Une réponse qui respecte ces critères obtient un bon score."
+        ),
         evaluation_params=[SingleTurnParams.INPUT, SingleTurnParams.ACTUAL_OUTPUT],
         threshold=0.5,
     )
 
-    # TODO-02: ajuster la consigne pour vérifier explicitement formule d'intro et formule de conclusion.
     formula_score = GEval(
         name="AnswerStructure",
         model=model,
         criteria=(
-            "La réponse doit contenir ..."
+            "Évalue la structure de la réponse. "
+            "La réponse doit commencer par une formule d'introduction adaptée "
+            "qui accueille la demande ou reformule brièvement le problème de l'utilisateur. "
+            "Elle doit ensuite apporter une réponse structurée et compréhensible. "
+            "Enfin, elle doit se terminer par une formule de conclusion appropriée, "
+            "proposant une aide complémentaire ou invitant l'utilisateur à revenir "
+            "si le problème persiste. "
+            "Vérifie explicitement la présence de ces deux éléments : "
+            "une introduction au début et une conclusion à la fin. "
+            "Une réponse sans introduction ou sans conclusion doit être pénalisée."
         ),
         evaluation_params=[SingleTurnParams.ACTUAL_OUTPUT],
         threshold=0.5,
@@ -99,7 +114,6 @@ def grounding_faithfulness_section(verbose: bool = False) -> list[bool]:
     if verbose:
         log_io(question, answer, retrieval_context)
 
-    # TODO-03: ajuster le seuil de faithfulness selon votre tolerance au risque d'hallucination.
     # threshold = seuil de réussite : le cas passe si le score >= threshold.
     faithfulness_score = FaithfulnessMetric(threshold=0.5, model=model, penalize_ambiguous_claims=True)
 
