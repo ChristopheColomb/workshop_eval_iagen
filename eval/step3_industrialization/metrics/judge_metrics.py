@@ -35,7 +35,7 @@ def tone_metric(threshold: float) -> GEval:
             "excédentaire déroutant pour l'utilisateur, absence d'offre d'escalade "
             "si utile."
         ),
-        evaluation_params=[SingleTurnParams.INPUT, SingleTurnParams.ACTUAL_OUTPUT],
+        evaluation_params=[SingleTurnParams.ACTUAL_OUTPUT],
         model=model,
         threshold=threshold,
     )

@@ -7,6 +7,7 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 import pytest
+import pandas as pd
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
@@ -16,6 +17,7 @@ from eval.common.deepeval_model import build_deepeval_model
 from deepeval.dataset import EvaluationDataset
 from deepeval.metrics import GEval
 from deepeval.test_case import SingleTurnParams
+from deepeval.test_case import LLMTestCase
 from deepeval import assert_test
 
 DATASET_PATH = (PROJECT_ROOT / "eval" / "step3_industrialization" / "datasets" / "judge_cases.csv")
@@ -24,8 +26,21 @@ DATASET_PATH = (PROJECT_ROOT / "eval" / "step3_industrialization" / "datasets" /
 def load_judge_dataset() -> EvaluationDataset:
     """Charge le dataset judge depuis CSV avec test cases."""
     dataset = EvaluationDataset()
-    # TODO: Charger les test cases depuis le CSV judge_cases.csv, DATASET_PATH est déjà défini.
 
+    df = pd.read_csv(DATASET_PATH)
+
+    for _, row in df.iterrows():
+        test_case = LLMTestCase(
+            input=row["input"],
+            actual_output=row["actual_output"],
+            additional_metadata={
+                "case_id": row["case_id"],
+                "test_family": row["test_family"],
+                "risk_level": row["risk_level"],
+            },
+        )
+
+        dataset.add_test_case(test_case)
     return dataset
 
 
@@ -41,7 +56,7 @@ def test_llm_judge_correctness(test_case):
         ),
         evaluation_params=[SingleTurnParams.INPUT, SingleTurnParams.ACTUAL_OUTPUT],
         model=model,
-        # TODO: Definir un threshold adapté au niveau d'exigence souhaité.
+        threshold=0.5,
     )
     assert_test(test_case, [correctness_score])
 
